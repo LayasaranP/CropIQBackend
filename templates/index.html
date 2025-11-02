@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agricultural Rover Dashboard</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-6">
+
+  <div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+      <div>
+        <h1 class="text-3xl font-bold mb-2">Agricultural Rover Dashboard</h1>
+        <p class="text-gray-400">Monitor and control your autonomous farming rover</p>
+      </div>
+      <div class="flex gap-8">
+        <div>
+          <div class="text-sm text-gray-400">Connection</div>
+          <div id="connection-status" class="text-green-400 font-medium">Online</div>
+        </div>
+        <div>
+          <div class="text-sm text-gray-400">Rover Status</div>
+          <div id="rover-status" class="text-blue-400 font-medium capitalize">offline</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rover Controls -->
+    <div class="bg-gray-800 rounded-lg p-6 mb-6 shadow-lg">
+      <h2 class="text-xl font-bold mb-4">Rover Controls</h2>
+      <div class="flex gap-4">
+        <button id="start-btn" class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg">Start Rover</button>
+        <button id="deploy-btn" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Deploy Sensor</button>
+        <button id="stop-btn" class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg">Stop Rover</button>
+      </div>
+    </div>
+
+    <!-- Sensor Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6" id="sensor-cards">
+      <!-- Filled dynamically -->
+    </div>
+
+    <!-- Charts -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div class="bg-gray-800 p-4 rounded-lg flex justify-center items-center shadow-lg">
+        <canvas id="tempChart" width="300" height="200"></canvas>
+      </div>
+      <div class="bg-gray-800 p-4 rounded-lg flex justify-center items-center shadow-lg">
+        <canvas id="humidityChart" width="300" height="200"></canvas>
+      </div>
+      <div class="bg-gray-800 p-4 rounded-lg flex justify-center items-center shadow-lg">
+        <canvas id="soilChart" width="300" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- Historical Data -->
+    <div class="bg-gray-800 rounded-lg p-6 shadow-lg">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold">Historical Data</h2>
+        <button id="export-btn" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 rounded-lg">Export CSV</button>
+      </div>
+      <table class="w-full text-left" id="data-table">
+        <thead>
+          <tr class="border-b border-gray-700">
+            <th class="pb-3 text-gray-400 font-medium">Timestamp</th>
+            <th class="pb-3 text-gray-400 font-medium">Temperature</th>
+            <th class="pb-3 text-gray-400 font-medium">Humidity</th>
+            <th class="pb-3 text-gray-400 font-medium">Soil Moisture</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let connectionStatus = "online";
+    let roverStatus = "offline";
+    let historicalData = [];
+
+    const roverStatusEl = document.getElementById("rover-status");
+    const connectionStatusEl = document.getElementById("connection-status");
+    const tableBody = document.querySelector("#data-table tbody");
+    const sensorCards = document.getElementById("sensor-cards");
+
+    // Render sensor cards
+    function renderSensorCards(data) {
+      sensorCards.innerHTML = `
+        <div class="bg-white text-gray-800 rounded-lg p-6 shadow-md">
+          <div class="flex justify-between mb-4"><span>Temperature</span><span class="font-bold">${data.temperature}°C</span></div>
+        </div>
+        <div class="bg-white text-gray-800 rounded-lg p-6 shadow-md">
+          <div class="flex justify-between mb-4"><span>Humidity</span><span class="font-bold">${data.humidity}%</span></div>
+        </div>
+        <div class="bg-white text-gray-800 rounded-lg p-6 shadow-md">
+          <div class="flex justify-between mb-4"><span>Soil Moisture</span><span class="font-bold">${data.soilMoisture}%</span></div>
+        </div>
+      `;
+    }
+
+    // Render table
+    function renderTable() {
+      tableBody.innerHTML = "";
+      historicalData.slice(-5).forEach(row => {
+        tableBody.innerHTML += `
+          <tr class="border-b border-gray-700">
+            <td class="py-3 text-gray-300">${row.timestamp}</td>
+            <td class="py-3 text-gray-300">${row.temperature}°C</td>
+            <td class="py-3 text-gray-300">${row.humidity}%</td>
+            <td class="py-3 text-gray-300">${row.soilMoisture}%</td>
+          </tr>
+        `;
+      });
+    }
+
+    // Chart setup
+    const ctxTemp = document.getElementById("tempChart").getContext("2d");
+    const ctxHum = document.getElementById("humidityChart").getContext("2d");
+    const ctxSoil = document.getElementById("soilChart").getContext("2d");
+
+    const chartOptions = {
+      responsive: false,
+      scales: {
+        x: { ticks: { color: "#ccc" } },
+        y: { ticks: { color: "#ccc" } }
+      },
+      plugins: { legend: { display: false } }
+    };
+
+    const tempChart = new Chart(ctxTemp, {
+      type: 'line',
+      data: { labels: [], datasets: [{ label: 'Temperature', data: [], borderColor: '#14b8a6', tension: 0.3 }] },
+      options: chartOptions
+    });
+
+    const humidityChart = new Chart(ctxHum, {
+      type: 'line',
+      data: { labels: [], datasets: [{ label: 'Humidity', data: [], borderColor: '#3b82f6', tension: 0.3 }] },
+      options: chartOptions
+    });
+
+    const soilChart = new Chart(ctxSoil, {
+      type: 'line',
+      data: { labels: [], datasets: [{ label: 'Soil Moisture', data: [], borderColor: '#10b981', tension: 0.3 }] },
+      options: chartOptions
+    });
+
+    function updateChartsWithData(newData) {
+      const charts = [tempChart, humidityChart, soilChart];
+      const keys = ['temperature', 'humidity', 'soilMoisture'];
+
+      charts.forEach((chart, i) => {
+        chart.data.labels.push(newData.timestamp);
+        chart.data.datasets[0].data.push(newData[keys[i]]);
+        if (chart.data.labels.length > 10) {
+          chart.data.labels.shift();
+          chart.data.datasets[0].data.shift();
+        }
+        chart.update();
+      });
+    }
+
+    // Fetch sensor data from FastAPI backend
+    async function fetchSensorData() {
+      try {
+        const res = await fetch("/latest-sensor-data");
+        const data = await res.json();
+        if (data.status === "success") {
+          const latest = data.latest_data;
+          const formatted = {
+            temperature: latest.temperature,
+            humidity: latest.humidity,
+            soilMoisture: latest.soil_moisture,
+            timestamp: new Date().toLocaleTimeString()
+          };
+          historicalData.push(formatted);
+          renderSensorCards(formatted);
+          renderTable();
+          updateChartsWithData(formatted);
+        }
+      } catch (err) {
+        console.error("Error fetching sensor data:", err);
+      }
+    }
+
+    // Control buttons
+    document.getElementById("start-btn").onclick = async () => {
+      roverStatusEl.textContent = "running";
+      await fetch("/rover-control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cmd: "START" })
+      });
+    };
+
+    document.getElementById("deploy-btn").onclick = async () => {
+      roverStatusEl.textContent = "deploying...";
+      await fetch("/activate-soil-moisture", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cmd: "DEPLOY" })
+      });
+      setTimeout(() => { roverStatusEl.textContent = "running"; }, 2000);
+    };
+
+    document.getElementById("stop-btn").onclick = async () => {
+      roverStatusEl.textContent = "offline";
+      await fetch("/rover-control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cmd: "STOP" })
+      });
+    };
+
+    // Export CSV
+    document.getElementById("export-btn").onclick = () => {
+      const csv = [
+        ['Timestamp', 'Temperature', 'Humidity', 'Soil Moisture'],
+        ...historicalData.map(d => [d.timestamp, d.temperature, d.humidity, d.soilMoisture])
+      ].map(r => r.join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'rover-data.csv';
+      a.click();
+    };
+
+    // Initialize
+    fetchSensorData();
+    setInterval(fetchSensorData, 2000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# ---- Virtual Environments ----
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+
+# ---- FastAPI / Uvicorn ----
+# (No specific files, but logs can be ignored)
+*.log
+
+# ---- Dependencies ----
+# If using Poetry or Pipenv, you’ll commit only lock files
+poetry.lock
+Pipfile.lock
+
+# ---- IDE / Editor ----
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ---- OS Files ----
+.DS_Store
+Thumbs.db
+
+# ---- Test / Coverage ----
+htmlcov/
+.tox/
+.nox/
+.coverage
+coverage.xml
+*.cover
+.pytest_cache/
+tests/__pycache__/
+
+# ---- Mypy / Type Checking ----
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ---- Pyre / Pytype ----
+.pyre/
+.pytype/
+
+# ---- Build / Distribution ----
+build/
+dist/
+*.egg-info/
+.eggs/
+MANIFEST
+
+# ---- Docker ----
+# Ignore Docker build artifacts
+*.pid
+*.tar
+*.bak
+
+# ---- Local Environment / Secrets ----
+.env
+.env.*
+!.env.example  # Keep example env file for reference
+
+# ---- Static / Uploads (if applicable) ----
+staticfiles/
+media/
+uploads/
+
+# ---- Jupyter / Notebooks ----
+.ipynb_checkpoints
+
+# ---- VSCode Workspace ----
+*.code-workspace
