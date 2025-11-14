@@ -4,7 +4,6 @@ from fastapi.responses import JSONResponse, HTMLResponse
 from models import SensorData, RoverControl, ActivateSensor
 from pydantic import ValidationError
 from typing import Optional
-import random
 
 app = FastAPI(
     title="ESP32 Server",
@@ -53,9 +52,9 @@ async def get_sensor_data_esp32(data: SensorData):
 async def send_data_client_client():
     # if latest_data is None:
     #     raise HTTPException(status_code=404, detail="No sensor data received yet")
-    num1 = random.randrange(20, 30, 3)
-    num2 = random.randrange(20, 30, 3)
-    num3 = random.randrange(20, 30, 3)
+    # num1 = random.randrange(20, 30, 3)
+    # num2 = random.randrange(20, 30, 3)
+    # num3 = random.randrange(20, 30, 3)
 
     sensor = {
         "temperature": num1,
