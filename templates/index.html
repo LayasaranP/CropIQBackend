@@ -220,18 +220,18 @@
     };
 
     // Export CSV
-    document.getElementById("export-btn").onclick = () => {
-      const csv = [
-        ['Timestamp', 'Temperature', 'Humidity', 'Soil Moisture'],
-        ...historicalData.map(d => [d.timestamp, d.temperature, d.humidity, d.soilMoisture])
-      ].map(r => r.join(',')).join('\n');
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'rover-data.csv';
-      a.click();
-    };
+    // document.getElementById("export-btn").onclick = () => {
+    //   const csv = [
+    //     ['Timestamp', 'Temperature', 'Humidity', 'Soil Moisture'],
+    //     ...historicalData.map(d => [d.timestamp, d.temperature, d.humidity, d.soilMoisture])
+    //   ].map(r => r.join(',')).join('\n');
+    //   const blob = new Blob([csv], { type: 'text/csv' });
+    //   const url = URL.createObjectURL(blob);
+    //   const a = document.createElement('a');
+    //   a.href = url;
+    //   a.download = 'rover-data.csv';
+    //   a.click();
+    // };
 
     // Initialize
     fetchSensorData();
